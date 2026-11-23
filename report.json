@@ -1,34 +1,120 @@
 {
-  "checkedAt": "2026-11-23T09:24:38Z",
-  "summary": "本次所有官方網域（taishinbank.com.tw、mkp.taishinbank.com.tw、cathay-cube.com.tw、cathaybk.com.tw、ctbcbank.com、service.ctbcbank.com、event.esunbank.com.tw、metro.taipei、vipmbr.cpc.com.tw）都被雲端環境的網路設定擋下（DNS 無法解析），17 個來源頁面 0 個讀到，因此 0 筆確認、無法比對任何回饋率／期間／上限。WebSearch 可用，僅找到 1 項疑似新活動（玉山熊本熊限時活動，未讀原頁，待確認）；台新搜尋結果提到一項 2027/1/1–2027/12/31 的活動但內容不明，另有搜尋摘要稱假日刷／切換刷平台頁標示到 2027/3/31（資料為 2027/12/31），因未讀到原頁不列為變動。14 天內到期：CUBE 秋日遊 7 筆（cube-autumn-jp-general、cube-autumn-jp-restaurant、cube-autumn-jp-biccamera、cube-autumn-jp-matsukiyo、cube-autumn-jp-uniqlo、cube-autumn-mos、cube-autumn-sogo）於 2026-11-30 到期，12/1 自動切回集精選。",
+  "checkedAt": "2026-11-23T09:34:40Z",
+  "summary": "共讀取 18 個官方頁面（含 PDF），29 項與官方一致（27 筆優惠＋北捷、捷利卡），四張卡海外手續費皆仍為 1.5%；10 項變動（含 1 筆可改為已驗證、2 項新方案／新活動）；CUBE 產品頁與權益方案列表頁為動態載入讀不到。14 天內到期：CUBE 秋日遊 7 筆（cube-autumn-*，2026/11/30 到期，12/1 自動切回集精選）。官方未寫清楚、未當作確認也未當作變動的項目：台新不回饋清單未明列肯德基（僅寫「同性質連鎖速食店」），故 rt-zero 未確認；CUBE 秋日遊的日本餐廳一般回饋、摩斯與 SOGO 是否含線上交易未明載，故 cube-autumn-jp-restaurant／mos／sogo 未確認；捷利卡儲值刷卡回饋（rt-jcard）、全支付是否含全聯門市本身（cube-pxpay-pxmart，原文僅「全聯（含大全聯）店外特約商店2%」）、ALL ME 電信費是否有基本 1%（allme-cht）、熊本熊日本以外海外回饋（kuma-abroad-other）仍無官方說明，維持待驗證。台新搜尋結果出現「【2027年度】」標題但內容截斷，另有一份公告寫切換平台至 2027/3/31，與活動頁 2027/12/31 不一致，未能確認。",
   "changes": [
     {
-      "cardId": "esun-kumamon",
-      "title": "熊本熊卡 限時活動（九州 AMU PLAZA 等指定特店 5%）",
+      "cardId": "taishin-richart",
+      "offerId": "rt-metro-qr",
+      "title": "北捷／公車：台新Pay 乘車碼",
+      "field": "方案／回饋率",
+      "old": "待驗證；未知適用方案，回饋率 null",
+      "new": "屬 Pay著刷（台新Pay），Level 2 3.8%、Level 1 1.3%",
+      "sourceUrl": "https://mkp.taishinbank.com.tw/TsCms/WebMarketing?id=WM_20260708095300794",
+      "note": "可改為已驗證。原文：「台新Pay 及 台新Pay+ 綁定支付享 3.8%」，「切換選擇【台新Pay】、【乘車碼】，並於帳單摘要顯示消費明細包含【ＴＳ＊】，方符合回饋資格」。臺北捷運信用卡感應仍只有 0.3%；公車頁面未提及。"
+    },
+    {
+      "cardId": "taishin-richart",
+      "offerId": "rt-chill-sport-l2",
+      "title": "Chill 刷：健身／運動品牌（L2）",
+      "field": "期間",
+      "old": "2026-07-01 ~ 2027-12-31",
+      "new": "2026-07-08 ~ 2026-12-31",
+      "sourceUrl": "https://mkp.taishinbank.com.tw/TsCms/WebMarketing?id=WM_20260708095300794",
+      "note": "原文：「2026/7/8 - 2026/12/31 快樂上市」、「【Chill刷】最高10%展延至2026/12/31囉！」。其他 7 大方案仍為 2026/7/1–2027/12/31。回饋率 5% 一致。"
+    },
+    {
+      "cardId": "taishin-richart",
+      "offerId": "rt-chill-sport-l1",
+      "title": "Chill 刷：健身／運動品牌（L1）",
+      "field": "期間",
+      "old": "2026-07-01 ~ 2027-12-31",
+      "new": "2026-07-08 ~ 2026-12-31",
+      "sourceUrl": "https://mkp.taishinbank.com.tw/TsCms/WebMarketing?id=WM_20260708095300794",
+      "note": "同上，Chill刷通路清單期間「2026/7/8 - 2026/12/31」。Level 1 1.3% 一致。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "offerId": "cube-autumn-jp-general",
+      "title": "秋日遊：日本實體消費",
+      "field": "付款方式",
+      "old": "physical, apple-pay, google-pay, online",
+      "new": "physical, apple-pay, google-pay（不含 online）",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html",
+      "note": "原文：「本活動限使用實體信用卡過卡或感應式刷卡」「且須為面對面交易，儲值不列入計算」。回饋率 3.5%、期間 2026/10/1–11/30 一致。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "offerId": "cube-autumn-jp-biccamera",
+      "title": "秋日遊：BicCamera",
+      "field": "付款方式",
+      "old": "physical, apple-pay, google-pay, online",
+      "new": "physical, apple-pay, google-pay（不含 online）",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html",
+      "note": "官方寫明不適用「官方線上交易、期間限定快閃店及其他非實體門市交易」。3.5% 一致。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "offerId": "cube-autumn-jp-matsukiyo",
+      "title": "秋日遊：松本清",
+      "field": "付款方式",
+      "old": "physical, apple-pay, google-pay, online",
+      "new": "physical, apple-pay, google-pay（不含 online）",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html",
+      "note": "官方寫明不適用「百貨及商場門市、店中櫃、官方線上購物、期間限定快閃店」。3.5% 一致。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "offerId": "cube-autumn-jp-uniqlo",
+      "title": "秋日遊：UNIQLO（日本）",
+      "field": "付款方式",
+      "old": "physical, apple-pay, google-pay, online",
+      "new": "physical, apple-pay, google-pay（不含 online）",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html",
+      "note": "官方寫明不適用「百貨及商場門市、UNIQLO Online Store、儲值禮品卡、期間限定快閃店」。5% 一致。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "title": "秋日遊：日本餐廳預約平台 Tabelog／TableCheck／OMAKASE",
+      "field": "通路",
+      "old": "資料無此項（僅 cube-autumn-jp-restaurant 3.5%）",
+      "new": "5%",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html",
+      "note": "原文：「三大餐廳預約平台（ Tabelog、 TableCheck、 OMAKASE ）之回饋僅適用預訂餐廳，並於平台實際扣款之交易」。2026/11/30 到期。"
+    },
+    {
+      "cardId": "cathay-cube",
+      "title": "慶生月／童樂匯／台塑家權益方案",
       "field": "新方案／新活動",
-      "old": "資料中無此活動",
-      "new": "活動期間 2026/8/20~2027/8/31；指定特店累計滿 2,000 日圓享 5% 回饋，每期上限 2,000 日圓；另有三越伊勢丹、MITSUI OUTLET PARK 登錄式回饋、名古屋指定商店加碼 1.5%",
+      "old": "資料無此方案",
+      "new": "慶生月 2026/10/1–12/31；童樂匯 2026/7/1–12/31（親子通路最高10%）；台塑家 2026/6/1–12/31",
+      "sourceUrl": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/discount/2026/familypillar/index.html",
+      "note": "來自官方網域搜尋結果摘要，回饋率與通路需再到官網確認（CUBE 權益方案列表頁動態載入讀不到）。另：台塑聯名卡公告寫「自2027/1/1起，始適用CUBE信用卡2027年度權益」，2027 內容尚未公布。"
+    },
+    {
+      "cardId": "esun-kumamon",
+      "title": "台灣中油直營站加油 3% 玉山e point（及其他限時活動）",
+      "field": "新方案／新活動",
+      "old": "資料無此活動",
+      "new": "2026/10/1–12/31 台灣中油直營站 3% 玉山e point，每月每歸戶上限 100 點，需登錄（每月限量 20,000 名）",
       "sourceUrl": "https://event.esunbank.com.tw/credit/kumamon-card/campaign.html",
-      "note": "僅來自 WebSearch 摘要，官方頁本次讀不到（網路被擋），細節（是否需登錄、上限單位）需人工到官網確認後再決定是否加入。"
+      "note": "同頁另有：AMU PLAZA 5%（2026/8/20–2027/8/31，每期上限 2,000 日圓）、大丸福岡天神店 5%（至 2026/12/31）、名古屋指定商店加碼 1.5%（需登錄，上限 500 元）、三越伊勢丹／MITSUI OUTLET 滿額回饋（需登錄）。"
     }
   ],
   "unreachable": [
-    "https://mkp.taishinbank.com.tw/TsCms/WebMarketing?id=WM_20260708095300794（Richart 各方案 18 筆＋rt-metro-qr）",
-    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/future/ab46dfa7-5d88-11f1-b50f-0050568c09e3（rt-base、rt-jcard）",
-    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/rights/notice/restricteditems/（rt-zero）",
-    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/future/e18b445e-2cd6-11f1-b50f-0050568c09e3（Richart 海外手續費）",
-    "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube（CUBE 17 筆）",
-    "https://www.cathay-cube.com.tw/cathaybk/personal/event/overview/credit-card/shopping/202604/CUBE_PXPayPlus_2026（cube-pxpay、cube-pxpay-pxmart）",
-    "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html（秋日遊 7 筆）",
-    "https://www.cathaybk.com.tw/cathaybk/-/media/768e5abae33c40b4b381ab7da6127032.pdf?sc_lang=en（CUBE 海外手續費）",
-    "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/ALLME/promotions.html（ALL ME 6 筆）",
-    "https://service.ctbcbank.com/FAQ/Page01?kmid=4724（ALL ME 海外手續費）",
-    "https://event.esunbank.com.tw/credit/kumamon-card/taiwan-discount.html（kuma-domestic）",
-    "https://event.esunbank.com.tw/credit/kumamon-card/japan-discount.html（kuma-jp、kuma-jp-shops）",
-    "https://event.esunbank.com.tw/credit/kumamon-card/japan-discount-paypay.html（kuma-paypay）",
-    "https://event.esunbank.com.tw/credit/kumamon-card/index.html（kuma-abroad-other、熊本熊海外手續費）",
-    "prog:taipeiMetro — https://www.metro.taipei/cp.aspx?n=AB56163F79ECB2C2",
-    "prog:cpcJcard — https://vipmbr.cpc.com.tw/vipjieli/"
+    "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube（CUBE 產品頁，動態載入只有標題）：cube-base、cube-zero、cube-dining-skm-l1/l2/l3、cube-fixed-tw、cube-fixed-abroad 及待驗證的玩數位／樂饗購／趣旅行／集精選通路均未能確認",
+    "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube-list（CUBE 權益方案列表，動態載入）"
   ],
-  "confirmedIds": []
+  "confirmedIds": [
+    "rt-base",
+    "rt-pay-tspay-l2", "rt-pay-tspay-l1", "rt-pay-linepay-l2", "rt-pay-linepay-l1",
+    "rt-daily-cvs-l2", "rt-daily-cvs-l1", "rt-daily-l2", "rt-daily-l1",
+    "rt-big-l2", "rt-big-l1",
+    "rt-dining-l2", "rt-dining-l1",
+    "rt-digital-l2", "rt-digital-l1",
+    "rt-travel-l2", "rt-travel-l1",
+    "cube-pxpay",
+    "allme-base", "allme-abroad", "allme-cvs", "allme-tra", "allme-pchome",
+    "kuma-domestic", "kuma-jp", "kuma-jp-shops", "kuma-paypay",
+    "prog:taipeiMetro", "prog:cpcJcard"
+  ]
 }
