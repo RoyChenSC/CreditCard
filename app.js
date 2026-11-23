@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.2.1';
+const VERSION = '1.3.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -93,7 +93,7 @@ function renderWeekTip() {
   const stale = staleVerified().length;
   const verified = offers().filter((o) => effStatus(o) === 'verified').length;
   const tip = $('#weekTip');
-  const changed = report && (report.changes || []).length && daysBetween(report.checkedAt.slice(0, 10), todayKey()) <= 8 ? report.changes.length : 0;
+  const changed = report && !reportHandled() && (report.changes || []).length && daysBetween(report.checkedAt.slice(0, 10), todayKey()) <= 8 ? report.changes.length : 0;
   if (changed) tip.textContent = `⚠ 官方頁面有 ${changed} 項變動（${shortDate(report.checkedAt.slice(0, 10))} 檢查）→ 去確認`;
   else if (stale) tip.textContent = `⚠ ${stale} 筆優惠超過 ${S().staleDays} 天沒確認，已暫停推薦 → 去確認`;
   else if (!verified) tip.textContent = '目前沒有已驗證的優惠，結果只供參考 → 去確認';
@@ -307,6 +307,8 @@ async function loadReport() {
     if ($('#sheet').hidden) renderCurrent();
   } catch (e) { /* 離線：沿用上次的報告 */ }
 }
+/** 網站資料（data.js）更新時間晚於報告 → 報告列出的變動已處理 */
+const reportHandled = () => !!(report && typeof DATA_UPDATED !== 'undefined' && report.checkedAt <= DATA_UPDATED);
 /** 報告中「官方頁面與目前資料一致」、且目前仍是已驗證、確認日期比報告舊的項目 */
 function reportConfirmable() {
   if (!report || !Array.isArray(report.confirmedIds)) return [];
@@ -330,7 +332,8 @@ function reportHtml() {
       ${c.offerId && offers().some((o) => o.id === c.offerId) ? `<button class="text-btn" data-edit="${esc(c.offerId)}">改</button>` : ''}</div>`;
   }).join('');
   return `<div class="card-title">官方頁面自動檢查（${shortDate(day)}${age > 8 ? '，已超過一週沒更新' : ''}）</div>
-    ${changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同或待確認，請確認後修改</div>${list}`
+    ${changes.length && reportHandled() ? `<div class="cl-sub">這份報告的 ${changes.length} 項變動已更新到網站資料（${shortDate(DATA_UPDATED.slice(0, 10))}）✓</div>`
+      : changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同或待確認，請確認後修改</div>${list}`
       : (report.confirmedIds || []).length ? '<div class="cl-sub">讀到的官方頁面和目前資料一致 ✓</div>' : '<div class="warn-box" style="margin:0">這次沒有讀到官方頁面，無法比對，請手動確認</div>'}
     ${fails.length ? `<details class="hint"><summary>讀不到 ${fails.length} 個頁面（請手動確認）</summary>${fails.map((f) => `<div>・${esc(f)}</div>`).join('')}</details>` : ''}
     ${report.summary ? `<div class="hint">${esc(report.summary)}</div>` : ''}
