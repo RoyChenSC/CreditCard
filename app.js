@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -330,8 +330,9 @@ function reportHtml() {
       ${c.offerId && offers().some((o) => o.id === c.offerId) ? `<button class="text-btn" data-edit="${esc(c.offerId)}">改</button>` : ''}</div>`;
   }).join('');
   return `<div class="card-title">官方頁面自動檢查（${shortDate(day)}${age > 8 ? '，已超過一週沒更新' : ''}）</div>
-    ${changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同，請確認後修改</div>${list}` : '<div class="cl-sub">官方頁面和目前資料一致 ✓</div>'}
-    ${fails.length ? `<div class="hint">讀不到：${esc(fails.join('、'))}（請手動確認）</div>` : ''}
+    ${changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同或待確認，請確認後修改</div>${list}`
+      : (report.confirmedIds || []).length ? '<div class="cl-sub">讀到的官方頁面和目前資料一致 ✓</div>' : '<div class="warn-box" style="margin:0">這次沒有讀到官方頁面，無法比對，請手動確認</div>'}
+    ${fails.length ? `<details class="hint"><summary>讀不到 ${fails.length} 個頁面（請手動確認）</summary>${fails.map((f) => `<div>・${esc(f)}</div>`).join('')}</details>` : ''}
     ${report.summary ? `<div class="hint">${esc(report.summary)}</div>` : ''}
     ${can.length ? `<button class="btn" style="width:100%;margin-top:10px" data-okall="1">✓ 依報告確認 ${can.length} 筆沒變動的優惠</button>` : ''}
     <div style="height:14px"></div>`;

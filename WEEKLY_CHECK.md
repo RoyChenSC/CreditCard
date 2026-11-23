@@ -58,17 +58,20 @@
 }
 ```
 
-## 發布報告（只動報告分支，不碰 main）
+## 發布報告（只動報告分支，不碰 main；不要用 git rm 或強制推送）
+用獨立的工作目錄（worktree）處理報告分支，main 的檔案完全不動：
 ```bash
-cp report.json /tmp/report.json
-git checkout --orphan claude/weekly-report
-git rm -rf . -q
-cp /tmp/report.json report.json
-git add report.json
-git commit -m "每週檢查報告 $(date -u +%F)"
-git push -f origin claude/weekly-report
+W=$(mktemp -d)/wt
+if git ls-remote --exit-code origin claude/weekly-report >/dev/null; then
+  git fetch origin claude/weekly-report
+  git worktree add -B claude/weekly-report "$W" origin/claude/weekly-report
+else
+  git worktree add --orphan -b claude/weekly-report "$W"
+fi
+cp report.json "$W/report.json"   # report.json 先寫在 repo 外的暫存位置也可以
+cd "$W" && git add report.json && git commit -m "每週檢查報告 $(date -u +%F)" && git push origin claude/weekly-report
 ```
 
 如果推送失敗，在最後的回覆中說明錯誤，並附上完整的 report.json 內容。
 
-最後用三到五行繁體中文總結：有沒有變動、讀不到哪些頁面、需要使用者做什麼。
+最後用三到五行繁體中文總結：有沒有變動、讀不到哪些頁面、需要使用者做什麼。完成後用 PushNotification 送一則一兩句的中文摘要到使用者手機。
