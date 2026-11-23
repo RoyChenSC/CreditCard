@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>刷哪張</title>
+<meta name="description" content="查詢各通路該刷哪張信用卡">
+<meta name="theme-color" content="#EEF2FB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="刷哪張">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="bgfx" aria-hidden="true"></div>
+<main>
+  <!-- 查詢 -->
+  <section id="view-search" class="view active">
+    <h2 class="page-title">刷哪張？</h2>
+    <button class="week-tip" id="weekTip" hidden></button>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+      <input id="q" type="search" placeholder="商店，例如 全聯、711、北捷" autocomplete="off" enterkeyhint="search">
+    </div>
+    <div class="plans" id="plans"></div>
+    <div class="chips scroll" id="cats"></div>
+    <div id="results"></div>
+  </section>
+
+  <!-- 試算 -->
+  <section id="view-calc" class="view">
+    <h2 class="page-title">試算</h2>
+    <div class="seg" id="calcSeg">
+      <button data-m="buy" class="on">一般消費</button>
+      <button data-m="metro">北捷</button>
+      <button data-m="cpc">中油</button>
+    </div>
+    <div id="calcForm"></div>
+    <div id="calcOut"></div>
+  </section>
+
+  <!-- 資料：每週確認＋各卡優惠 -->
+  <section id="view-data" class="view">
+    <h2 class="page-title">優惠資料</h2>
+    <div class="card" id="weekCard"></div>
+    <div class="seg" id="cardSeg"></div>
+    <div class="chips scroll" id="stFilter"></div>
+    <div id="offerList"></div>
+    <button class="add-btn" id="addOffer">＋ 新增優惠</button>
+  </section>
+
+  <!-- 設定 -->
+  <section id="view-settings" class="view">
+    <h2 class="page-title">設定</h2>
+    <div id="cardSettings"></div>
+    <div class="list-title">推薦</div>
+    <div class="list pad" id="prefs"></div>
+    <div class="list-title">已登錄的活動</div>
+    <div class="list pad" id="regList"></div>
+    <div class="list-title">備份（資料只存在這支手機）</div>
+    <div class="list">
+      <button class="row" id="btnExport"><span class="ic">📤</span><span class="grow">匯出備份<span class="sub" id="backupInfo"></span></span></button>
+      <button class="row" id="btnImport"><span class="ic">📥</span><span class="grow">匯入備份</span></button>
+      <button class="row danger" id="btnReset"><span class="ic">↺</span><span class="grow">優惠還原成預設資料</span></button>
+    </div>
+    <p class="note-text" id="verLine"></p>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-tab="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+    查詢
+  </button>
+  <button class="tab" data-tab="calc">
+    <svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/></svg>
+    試算
+  </button>
+  <button class="tab" data-tab="data">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>
+    資料<i class="dot" id="dataDot" hidden></i>
+  </button>
+  <button class="tab" data-tab="settings">
+    <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+    設定
+  </button>
+</nav>
+
+<!-- 共用底部面板 -->
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <button class="text-btn" id="sheetCancel">關閉</button>
+      <b id="sheetTitle"></b>
+      <button class="text-btn strong" id="sheetOk"></button>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div id="installGuide" class="ig" hidden>
+  <div class="ig-card" role="dialog" aria-labelledby="igTitle">
+    <img src="icons/icon-192.png" alt="" class="ig-icon">
+    <h2 id="igTitle" class="ig-title"></h2>
+    <a id="igSafari" class="ig-safari" href="#" hidden>用 Safari 打開</a>
+    <p id="igLead" class="ig-lead" hidden>按了沒反應？照下面做也可以：</p>
+    <ol id="igSteps" class="ig-steps"></ol>
+    <button id="igLater" class="ig-later">先不用，直接看看</button>
+  </div>
+  <svg id="igArrow" class="ig-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v15M5 12l7 7 7-7"/></svg>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

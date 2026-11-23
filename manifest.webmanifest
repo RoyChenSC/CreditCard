@@ -1,0 +1,16 @@
+{
+  "name": "刷哪張：信用卡回饋查詢",
+  "short_name": "刷哪張",
+  "description": "查詢各通路該刷哪張信用卡",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF2FB",
+  "theme_color": "#EEF2FB",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
