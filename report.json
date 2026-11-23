@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-11-23T09:24:38Z",
+  "summary": "本次所有官方網域（taishinbank.com.tw、mkp.taishinbank.com.tw、cathay-cube.com.tw、cathaybk.com.tw、ctbcbank.com、service.ctbcbank.com、event.esunbank.com.tw、metro.taipei、vipmbr.cpc.com.tw）都被雲端環境的網路設定擋下（DNS 無法解析），17 個來源頁面 0 個讀到，因此 0 筆確認、無法比對任何回饋率／期間／上限。WebSearch 可用，僅找到 1 項疑似新活動（玉山熊本熊限時活動，未讀原頁，待確認）；台新搜尋結果提到一項 2027/1/1–2027/12/31 的活動但內容不明，另有搜尋摘要稱假日刷／切換刷平台頁標示到 2027/3/31（資料為 2027/12/31），因未讀到原頁不列為變動。14 天內到期：CUBE 秋日遊 7 筆（cube-autumn-jp-general、cube-autumn-jp-restaurant、cube-autumn-jp-biccamera、cube-autumn-jp-matsukiyo、cube-autumn-jp-uniqlo、cube-autumn-mos、cube-autumn-sogo）於 2026-11-30 到期，12/1 自動切回集精選。",
+  "changes": [
+    {
+      "cardId": "esun-kumamon",
+      "title": "熊本熊卡 限時活動（九州 AMU PLAZA 等指定特店 5%）",
+      "field": "新方案／新活動",
+      "old": "資料中無此活動",
+      "new": "活動期間 2026/8/20~2027/8/31；指定特店累計滿 2,000 日圓享 5% 回饋，每期上限 2,000 日圓；另有三越伊勢丹、MITSUI OUTLET PARK 登錄式回饋、名古屋指定商店加碼 1.5%",
+      "sourceUrl": "https://event.esunbank.com.tw/credit/kumamon-card/campaign.html",
+      "note": "僅來自 WebSearch 摘要，官方頁本次讀不到（網路被擋），細節（是否需登錄、上限單位）需人工到官網確認後再決定是否加入。"
+    }
+  ],
+  "unreachable": [
+    "https://mkp.taishinbank.com.tw/TsCms/WebMarketing?id=WM_20260708095300794（Richart 各方案 18 筆＋rt-metro-qr）",
+    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/future/ab46dfa7-5d88-11f1-b50f-0050568c09e3（rt-base、rt-jcard）",
+    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/rights/notice/restricteditems/（rt-zero）",
+    "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/future/e18b445e-2cd6-11f1-b50f-0050568c09e3（Richart 海外手續費）",
+    "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube（CUBE 17 筆）",
+    "https://www.cathay-cube.com.tw/cathaybk/personal/event/overview/credit-card/shopping/202604/CUBE_PXPayPlus_2026（cube-pxpay、cube-pxpay-pxmart）",
+    "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/japanrewards/index.html（秋日遊 7 筆）",
+    "https://www.cathaybk.com.tw/cathaybk/-/media/768e5abae33c40b4b381ab7da6127032.pdf?sc_lang=en（CUBE 海外手續費）",
+    "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/ALLME/promotions.html（ALL ME 6 筆）",
+    "https://service.ctbcbank.com/FAQ/Page01?kmid=4724（ALL ME 海外手續費）",
+    "https://event.esunbank.com.tw/credit/kumamon-card/taiwan-discount.html（kuma-domestic）",
+    "https://event.esunbank.com.tw/credit/kumamon-card/japan-discount.html（kuma-jp、kuma-jp-shops）",
+    "https://event.esunbank.com.tw/credit/kumamon-card/japan-discount-paypay.html（kuma-paypay）",
+    "https://event.esunbank.com.tw/credit/kumamon-card/index.html（kuma-abroad-other、熊本熊海外手續費）",
+    "prog:taipeiMetro — https://www.metro.taipei/cp.aspx?n=AB56163F79ECB2C2",
+    "prog:cpcJcard — https://vipmbr.cpc.com.tw/vipjieli/"
+  ],
+  "confirmedIds": []
+}
