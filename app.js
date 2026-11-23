@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -15,7 +15,7 @@ const blankSettings = () => ({
   enabled: CARDS.map((c) => c.id),
   levels: { 'cathay-cube': 1 },
   plans: { 'taishin-richart': 'daily', 'cathay-cube': 'select' },
-  autoDebit: true,
+  autoDebits: { 'taishin-richart': true },   // 各卡是否設定該行帳戶自動扣繳卡費
   fees: {}, feesCur: {},
   registered: [],
   allPlans: true,     // 比較所有可切換方案（提示需切換）
@@ -30,7 +30,10 @@ function load() {
   try {
     const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!d || typeof d !== 'object') return blank();
-    return { ...blank(), ...d, settings: { ...blankSettings(), ...(d.settings || {}) } };
+    const s = { ...blankSettings(), ...(d.settings || {}) };
+    // v1.0 舊格式：autoDebit（只代表 Richart）→ autoDebits
+    if (typeof s.autoDebit === 'boolean') { s.autoDebits = { ...s.autoDebits, 'taishin-richart': s.autoDebit }; delete s.autoDebit; }
+    return { ...blank(), ...d, settings: s };
   } catch (e) { return blank(); }
 }
 function persist() {
@@ -241,12 +244,12 @@ function renderCalcOut() {
         <div class="kpi"><div class="k">每月車資</div><div class="v">${money(r.spend)}</div></div>
         <div class="kpi"><div class="k">台新卡回饋 ${fmtRate(r.ev.rate)}</div><div class="v">${cardTxt}</div></div>
         <div class="kpi"><div class="k">常客優惠 ${r.tier ? fmtRate(r.tier.rate) : ''}</div><div class="v">${r.metro === null ? '資料不足' : money(r.metro)}</div>
-          <div class="s">${r.elig === true ? '' : r.elig === null ? '支付方式資格未確認，未計入' : '此支付方式不適用'}</div></div>
+          <div class="s">${r.elig === true ? '依前月次數決定級距' : r.elig === null ? '支付方式資格未確認，未計入' : '此支付方式不適用'}</div></div>
         <div class="kpi ${r.precise ? 'hl' : 'ref'}"><div class="k">預估總回饋</div><div class="v">${totTxt}</div></div>
       </div>
       ${r.precise ? '' : `<div class="card"><div class="card-title">無法精確計算</div>${warnBox(r.missing)}</div>`}
       <div class="card"><div class="card-title">常客優惠級距 ${statusPill(P)}</div>
-        <table class="tiers">${P.tiers.map((t) => `<tr class="${r.tier === t ? 'on' : ''}"><td>${t.maxTrips === null ? `${t.minTrips} 次以上` : `${t.minTrips}～${t.maxTrips} 次`}</td><td style="text-align:right">${fmtRate(t.rate)}</td></tr>`).join('')}</table>
+        <table class="tiers"><tr class="${r.tier ? '' : 'on'}"><td>${P.tiers[0].minTrips - 1} 次以下</td><td style="text-align:right">無回饋</td></tr>${P.tiers.map((t) => `<tr class="${r.tier === t ? 'on' : ''}"><td>${t.maxTrips === null ? `${t.minTrips} 次以上` : `${t.minTrips}～${t.maxTrips} 次`}</td><td style="text-align:right">${fmtRate(t.rate)}</td></tr>`).join('')}</table>
         <div class="hint">${esc(P.notes)}<br>確認日期：${fullDate(P.lastVerified) || '尚未確認'}${P.sourceUrl ? ` · <a href="${esc(P.sourceUrl)}" target="_blank" rel="noopener">官方頁面</a>` : ''}</div></div>`;
   } else {
     const r = cpcCalc(calc.fuel, calc.price, offers(), S());
@@ -262,7 +265,8 @@ function renderCalcOut() {
       <div class="warn-box" style="margin:0 0 14px">捷利卡儲值是否算 Richart 天天刷加碼未確認，不會自動套用。</div>
       <div class="card"><div class="card-title">① 儲值（刷卡）</div>${rows(r.topup)}</div>
       <div class="card"><div class="card-title">② 捷利卡餘額付油費 ${statusPill(P)}</div>
-        <div class="cl-sub">不產生信用卡回饋。每公升折 ${P.fuelDiscountPerLiter === null ? '資料不足' : `${P.fuelDiscountPerLiter} 元`}；約 ${r.liters.toFixed(1)} 公升</div></div>
+        <div class="cl-sub">不產生信用卡回饋。自助加油每公升折 ${P.fuelDiscountPerLiter === null ? '資料不足' : `${P.fuelDiscountPerLiter} 元`}（約 ${r.liters.toFixed(1)} 公升，折 ${money(r.discount)}）；單筆儲值滿 ${fmtMoney(P.topupMin || 0)} 元 ${fmtRate(P.topupBonusRate)} 紅利（${money(r.bonus)}）</div>
+        <div class="hint">${esc(P.notes)}${P.sourceUrl ? ` · <a href="${esc(P.sourceUrl)}" target="_blank" rel="noopener">官方頁面</a>` : ''}</div></div>
       <div class="card"><div class="card-title">③ 直接刷卡加油</div>${rows(r.direct)}</div>`;
   }
 }
@@ -462,6 +466,10 @@ function saveEditor() {
 }
 
 /* ================= 設定 ================= */
+const AUTO_DEBIT_LABEL = {
+  'taishin-richart': ['台新帳戶自動扣繳卡費', '有設定＝Level 2（加碼 3.3%）；沒有＝Level 1（1.3%）'],
+  'esun-kumamon': ['玉山帳戶自動扣繳＋帳單e化', '國內一般消費 0.5% 需要'],
+};
 const sw = (on, attr) => `<button class="switch ${on ? 'on' : ''}" ${attr} role="switch" aria-checked="${on}"></button>`;
 function renderSettings() {
   const s = S();
@@ -469,10 +477,11 @@ function renderSettings() {
     const on = s.enabled.includes(c.id);
     const rows = [`<div class="set-row"><span class="grow">${cdot(c)}<b>${esc(c.shortName)}</b><span class="sub">${esc(c.name)}</span></span>${sw(on, `data-enable="${c.id}"`)}</div>`];
     if (on) {
-      if (c.id === 'taishin-richart') rows.push(`<div class="set-row"><span class="grow">台新帳戶自動扣繳<span class="sub">加碼回饋需要</span></span>${sw(s.autoDebit, 'data-autodebit="1"')}</div>`);
+      if (AUTO_DEBIT_LABEL[c.id]) rows.push(`<div class="set-row"><span class="grow">${AUTO_DEBIT_LABEL[c.id][0]}<span class="sub">${AUTO_DEBIT_LABEL[c.id][1]}</span></span>${sw(autoDebitOf(s, c.id), `data-autodebit="${c.id}"`)}</div>`);
       if (c.levels) rows.push(`<div class="set-row"><span class="grow">等級</span><div class="seg" style="min-width:150px">${c.levels.map((l) => `<button data-level="${c.id}" data-v="${l}" class="${(s.levels[c.id] || c.levels[0]) === l ? 'on' : ''}">Level ${l}</button>`).join('')}</div></div>`);
       if (c.plans) rows.push(`<div class="set-row"><span class="grow">目前方案</span><select class="field" data-planset="${c.id}">${c.plans.map((p) => `<option value="${p.id}" ${s.plans[c.id] === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`);
-      rows.push(`<div class="set-row"><span class="grow">海外手續費 %</span><input class="field" type="number" step="0.01" min="0" data-fee="${c.id}" value="${s.fees[c.id] ?? c.defaultForeignFeeRate}"></div>`);
+      const feeSrc = c.foreignFeeSource ? `<span class="sub">官方 ${c.defaultForeignFeeRate}%・<a href="${esc(c.foreignFeeSource)}" target="_blank" rel="noopener">來源</a>・${shortDate(c.foreignFeeVerified)} 確認</span>` : '';
+      rows.push(`<div class="set-row"><span class="grow">海外手續費 %${feeSrc}</span><input class="field" type="number" step="0.01" min="0" data-fee="${c.id}" value="${s.fees[c.id] ?? c.defaultForeignFeeRate}"></div>`);
       c.billingCurrencies.filter((x) => x !== 'TWD').forEach((cur) => {
         const k = `${c.id}:${cur}`;
         rows.push(`<div class="set-row"><span class="grow">${cur} 結帳手續費 %<span class="sub">雙幣卡外幣帳戶</span></span><input class="field" type="number" step="0.01" min="0" data-feecur="${k}" value="${s.feesCur[k] ?? (c.defaultForeignFeeByCurrency || {})[cur] ?? c.defaultForeignFeeRate}"></div>`);
@@ -493,10 +502,10 @@ function renderSettings() {
   $('#verLine').textContent = `版本 ${VERSION} · 預設資料 ${DATA_VERSION}${data.offers ? ' · 使用自訂資料' : ''}`;
 }
 $('#view-settings').addEventListener('click', (e) => {
-  const s = S(), t = e.target.closest('button'); if (!t) return;
+  const s = S(), t = e.target.closest('button'); if (!t || !t.closest('#cardSettings, #prefs, #regList')) return;
   const d = t.dataset;
   if (d.enable) s.enabled = s.enabled.includes(d.enable) ? s.enabled.filter((x) => x !== d.enable) : [...s.enabled, d.enable];
-  else if (d.autodebit) s.autoDebit = !s.autoDebit;
+  else if (d.autodebit) s.autoDebits = { ...s.autoDebits, [d.autodebit]: !autoDebitOf(s, d.autodebit) };
   else if (d.level) s.levels[d.level] = +d.v;
   else if (d.pref) s[d.pref] = !s[d.pref];
   else if (d.reg) s.registered = s.registered.includes(d.reg) ? s.registered.filter((x) => x !== d.reg) : [...s.registered, d.reg];

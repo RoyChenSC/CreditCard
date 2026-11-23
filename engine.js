@@ -16,7 +16,7 @@ const round2 = (n) => Math.round(n * 100) / 100;
 
 const STATUS = { verified: '已驗證', pending: '待驗證', expired: '已過期', invalid: '已失效', upcoming: '尚未開始' };
 const ROUNDING = { round: '逐筆四捨五入', floor: '逐筆無條件捨去', ceil: '逐筆無條件進位', none: '不逐筆取整', unknown: '取整規則未確認' };
-const PERIOD = { transaction: '每筆', month: '每月', campaign: '活動期間', year: '每年' };
+const PERIOD = { transaction: '每筆', month: '每月（每期帳單）', quarter: '每季', campaign: '活動期間', year: '每年' };
 const COUNTRY = { TW: '台灣', JP: '日本', AU: '澳洲', OTHER: '其他海外' };
 
 const CARD = Object.fromEntries(CARDS.map((c) => [c.id, c]));
@@ -85,17 +85,22 @@ function checkOffer(o, card, ctx, S) {
   }
   if (o.planId && card.plans) {
     if (o.planId !== S.plans[card.id]) {
-      if (S.allPlans) switchTo = planName(card.id, o.planId);
+      const plan = card.plans.find((x) => x.id === o.planId) || {};
+      if (plan.lock) reasons.push(`需切到「${plan.name}」（切換後鎖定到年底，不列入比較）`);
+      else if (S.allPlans) switchTo = planName(card.id, o.planId);
       else reasons.push(`需切換到「${planName(card.id, o.planId)}」`);
     }
   }
+  const usePm = ctx.payment || ctx.merchant.defaultPaymentMethod || null;
+  if (usePm && PAY[usePm] && PAY[usePm].cards && !PAY[usePm].cards.includes(card.id)) reasons.push(`${payName(usePm)} 不能綁這張卡`);
   if (o.paymentMethods.length) {
-    const pm = ctx.payment || ctx.merchant.defaultPaymentMethod || null;
+    const pm = usePm;
     const names = o.paymentMethods.map(payName).join('、');
     if (!pm) missing.push(`需用 ${names} 付款`);
     else if (!o.paymentMethods.includes(pm)) reasons.push(`限 ${names} 付款`);
   }
-  if (o.conditions && o.conditions.requiresAutoDebit && !S.autoDebit) reasons.push('需設定帳戶自動扣繳卡費');
+  if (o.conditions && o.conditions.requiresAutoDebit && !autoDebitOf(S, card.id)) reasons.push('需設定該行帳戶自動扣繳卡費');
+  if (o.conditions && o.conditions.requiresNoAutoDebit && autoDebitOf(S, card.id)) reasons.push('已設定自動扣繳，改適用 Level 2');
   if (o.requiresRegistration) {
     const reg = ctx.registered === null || ctx.registered === undefined ? S.registered.includes(o.id) : ctx.registered;
     if (!reg) reasons.push('尚未登錄活動');
@@ -133,6 +138,8 @@ function assess(card, offers, ctx, S) {
   };
 }
 
+/** 各卡是否設定該銀行帳戶自動扣繳卡費 */
+const autoDebitOf = (S, cardId) => !!(S.autoDebits || {})[cardId];
 const enabledCards = (S) => CARDS.filter((c) => S.enabled.includes(c.id));
 
 /** 某商店的最佳／次佳（正式只看已驗證；ref 為含待驗證的參考排名） */
@@ -165,7 +172,7 @@ function applyRounding(v, rule) {
 
 /** 單筆試算：門檻、上限、取整、手續費 */
 function calcEval(ev, amount, country, S) {
-  const fr = feeRate(ev.card, country, S);
+  const fr = ev.offer && ev.offer.waivesForeignFee ? 0 : feeRate(ev.card, country, S);
   const fee = round2(amount * fr / 100);
   const missing = [...ev.missing];
   const base = { ...ev, amount, reward: null, fee, feeRate: fr, net: null, capHit: false, precise: false, missing };
@@ -240,13 +247,15 @@ function metroCalc(trips, fare, offers, S) {
   const tier = P.tiers.find((x) => t >= x.minTrips && (x.maxTrips === null || t <= x.maxTrips)) || null;
   const elig = P.paymentEligibility[payId] ?? null;
   const pst = effStatus(P);
-  const metro = tier && tier.rate !== null ? Math.round(spend * tier.rate / 100) : null;
+  const minTier = Math.min(...P.tiers.map((x) => x.minTrips));
+  const metro = tier ? (tier.rate !== null ? Math.round(spend * tier.rate / 100) : null) : (t < minTier ? 0 : null);
   const metroCounts = elig === true && metro !== null && pst !== 'expired' && pst !== 'invalid';
   const missing = [];
   if (!S.enabled.includes(card.id)) missing.push('Richart 卡已在設定停用');
   if (ev.rate === null) missing.push('台新卡回饋率資料不足');
   if (ev.offer && ev.offer.rounding === 'unknown') missing.push('逐筆取整規則未確認，以區間表示');
   if (!ev.formal) missing.push(ev.stale ? '台新卡優惠需重新確認' : '台新卡優惠尚未驗證');
+  ev.missing.filter((m) => m.startsWith('另有')).forEach((m) => missing.push(`台新卡：${m}`));
   if (elig === null) missing.push(`${payName(payId)} 是否算進常客優惠未確認`);
   if (elig === false) missing.push(`${payName(payId)} 不適用常客優惠`);
   if (pst !== 'verified') missing.push('常客優惠級距尚未驗證');
@@ -269,10 +278,13 @@ function cpcCalc(amount, price, offers, S) {
     return calcEval(x.formal || x.reference, a, 'TW', S);
   });
   const best = (list) => list.filter((r) => r.reward !== null).sort((p, q) => q.reward - p.reward)[0] || null;
-  const topup = run('cpc-jcard-topup'), direct = run('cpc-direct');
+  // 儲值只有官方明列「捷利卡儲值」的優惠才算確定；一般消費回饋是否涵蓋儲值未確認
+  const topup = run('cpc-jcard-topup').map((r) => (r.offer && r.offer.merchantIds.includes('cpc-jcard-topup') ? r
+    : { ...r, formal: false, precise: false, missing: [...r.missing, '儲值是否算一般消費未確認'] }));
+  const direct = run('cpc-direct');
   const liters = price > 0 ? a / price : 0;
   const discount = P.fuelDiscountPerLiter === null ? null : Math.round(liters * P.fuelDiscountPerLiter);
-  const bonus = P.topupBonusRate === null ? null : Math.round(a * P.topupBonusRate / 100);
+  const bonus = P.topupBonusRate === null ? null : a >= (P.topupMin || 0) ? Math.round(a * P.topupBonusRate / 100) : 0;
   const bt = best(topup), bd = best(direct);
   return {
     amount: a, liters, topup, direct, discount, bonus, bestTopup: bt, bestDirect: bd, programStatus: effStatus(P),
