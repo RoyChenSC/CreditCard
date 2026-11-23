@@ -129,9 +129,12 @@ function assess(card, offers, ctx, S) {
   const today = ctx.today || todayKey();
   const formalTop = ok.find((x) => effStatus(x.o, today) === 'verified' && !isStale(x.o, S, today) && offerRate(x.o) !== null && x.c.missing.length === 0);
   const refTop = ok.find((x) => offerRate(x.o) !== null) || ok[0] || null;
+  // 已驗證的最佳之外，另有回饋率更高的待驗證優惠 → 提示（不影響正式推薦）
+  const betterPending = (chosen) => { const r = chosen ? offerRate(chosen.o) : null; const x = chosen && ok.find((y) => y !== chosen && offerRate(y.o) !== null && offerRate(y.o) > r); return x ? `另有待驗證：${x.o.title} ${fmtRate(offerRate(x.o))}` : null; };
+  const withHint = (ev, chosen) => (ev ? { ...ev, hint: betterPending(chosen) } : ev);
   return {
     card,
-    formal: formalTop ? toEval(card, formalTop, ctx, unknown(formalTop), S) : null,
+    formal: formalTop ? withHint(toEval(card, formalTop, ctx, unknown(formalTop), S), formalTop) : null,
     reference: toEval(card, refTop, ctx, refTop && unknown(refTop), S),
     eligible: ok.map((x) => toEval(card, x, ctx, unknown(x), S)),
     ineligible: all.filter((x) => !x.c.ok).map((x) => ({ offer: x.o, reasons: x.c.reasons })),
@@ -223,6 +226,8 @@ function calcAll(m, amount, offers, S, opt) {
     const a = assess(card, offers, ctx, S);
     const done = a.eligible.map((ev) => calcEval(ev, amount, opt.country, S)).sort(byNet);
     const pick = done.find((r) => r.formal) || done.find((r) => r.net !== null) || calcEval(a.reference, amount, opt.country, S);
+    const better = pick.formal && done.find((r) => !r.formal && r.net !== null && r.net > pick.net);
+    if (better) pick.hint = `另有待驗證：${better.offer.title}（${fmtMoney(better.net, 1)} 元）`;
     return { ...pick, ineligible: a.ineligible };
   }).sort(byNet);
   const formal = results.filter((r) => r.formal);

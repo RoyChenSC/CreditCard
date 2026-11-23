@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -93,10 +93,12 @@ function renderWeekTip() {
   const stale = staleVerified().length;
   const verified = offers().filter((o) => effStatus(o) === 'verified').length;
   const tip = $('#weekTip');
-  if (stale) tip.textContent = `⚠ ${stale} 筆優惠超過 ${S().staleDays} 天沒確認，已暫停推薦 → 去確認`;
+  const changed = report && (report.changes || []).length && daysBetween(report.checkedAt.slice(0, 10), todayKey()) <= 8 ? report.changes.length : 0;
+  if (changed) tip.textContent = `⚠ 官方頁面有 ${changed} 項變動（${shortDate(report.checkedAt.slice(0, 10))} 檢查）→ 去確認`;
+  else if (stale) tip.textContent = `⚠ ${stale} 筆優惠超過 ${S().staleDays} 天沒確認，已暫停推薦 → 去確認`;
   else if (!verified) tip.textContent = '目前沒有已驗證的優惠，結果只供參考 → 去確認';
-  tip.hidden = !(stale || !verified);
-  $('#dataDot').hidden = !stale;
+  tip.hidden = !(changed || stale || !verified);
+  $('#dataDot').hidden = !(stale || changed);
 }
 function bestHtml(ev, label) {
   if (!ev) return '';
@@ -138,7 +140,7 @@ function merchantBody(r) {
     const o = ev.offer;
     if (!o) return `<div class="cardline"><div class="cl-top">${cdot(a.card)}<span class="grow">${esc(a.card.shortName)}</span><span class="muted">資料不足</span></div></div>`;
     const sub = [esc(o.title), describeCap(o.rewardCap), o.endDate ? `到 ${shortDate(o.endDate)}` : ''].filter(Boolean).join(' · ');
-    const warn = ev.missing.length ? `<br><span class="warn">${esc(ev.missing.join('、'))}</span>` : '';
+    const warn = [...ev.missing, ...(ev.hint ? [ev.hint] : [])].length ? `<br><span class="warn">${esc([...ev.missing, ...(ev.hint ? [ev.hint] : [])].join('、'))}</span>` : '';
     return `<div class="cardline">
       <div class="cl-top">${cdot(a.card)}<span class="grow">${esc(a.card.shortName)}</span>
         ${ev.switchTo ? `<span class="pill plan">切到 ${esc(ev.switchTo)}</span>` : ''}${statusPill(o)}${rateHtml(ev, ev.formal)}</div>
@@ -233,7 +235,7 @@ function renderCalcOut() {
           <div class="cl-sub">${esc(x.offer ? x.offer.title : '沒有適用的優惠資料')} · ${fmtRate(x.rate)}</div></div>
         <div class="num"><div class="net ${x.formal ? 'rate ok' : ''}">${money(x.net, 1)}</div>
           <div class="cl-sub">回饋 ${money(x.reward, 1)}${x.fee ? ` − 手續費 ${money(x.fee, 1)}` : ''}</div></div>
-        ${x.missing.length ? `<div style="grid-column:1/-1">${warnBox(x.missing)}</div>` : ''}
+        ${x.missing.length || x.hint ? `<div style="grid-column:1/-1">${warnBox([...x.missing, ...(x.hint ? [x.hint] : [])])}</div>` : ''}
       </div>`).join('')}</div>`;
   } else if (calcMode === 'metro') {
     const r = metroCalc(calc.trips, calc.fare, offers(), S());
@@ -288,6 +290,62 @@ let dataCard = 'all';
 let stFilter = 'all';
 const ST_FILTERS = [['all', '全部'], ['check', '待確認'], ['verified', '已驗證'], ['pending', '待驗證'], ['soon', '即將到期'], ['expired', '已過期'], ['invalid', '已失效']];
 
+/* ---------- 每週自動檢查報告（雲端排程每週一寫到 GitHub 的 claude/weekly-report 分支） ---------- */
+const REPORT_URL = 'https://raw.githubusercontent.com/RoyChenSC/CreditCard/claude/weekly-report/report.json';
+const REPORT_KEY = 'ccr-report';
+let report = null;
+try { report = JSON.parse(localStorage.getItem(REPORT_KEY)); } catch (e) { report = null; }
+async function loadReport() {
+  if (location.protocol === 'file:') return;
+  try {
+    const r = await fetch(`${REPORT_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !d.checkedAt) return;
+    report = d;
+    try { localStorage.setItem(REPORT_KEY, JSON.stringify(d)); } catch (e) { /* 略過 */ }
+    if ($('#sheet').hidden) renderCurrent();
+  } catch (e) { /* 離線：沿用上次的報告 */ }
+}
+/** 報告中「官方頁面與目前資料一致」、且目前仍是已驗證、確認日期比報告舊的項目 */
+function reportConfirmable() {
+  if (!report || !Array.isArray(report.confirmedIds)) return [];
+  const day = report.checkedAt.slice(0, 10);
+  return report.confirmedIds.filter((id) => {
+    if (id.startsWith('prog:')) { const p = PROGRAMS[id.slice(5)]; return p && p.status === 'verified' && (p.lastVerified || '') < day; }
+    const o = offers().find((x) => x.id === id);
+    return o && effStatus(o) === 'verified' && (o.lastVerified || '') < day;
+  });
+}
+function reportHtml() {
+  if (!report) return '';
+  const day = report.checkedAt.slice(0, 10);
+  const age = daysBetween(day, todayKey());
+  const changes = report.changes || [], fails = report.unreachable || [];
+  const can = reportConfirmable();
+  const list = changes.map((c) => {
+    const card = CARD[c.cardId];
+    return `<div class="check-row"><span class="grow">${card ? cdot(card) : ''}<b>${esc(c.title || c.offerId || '')}</b>
+      <span class="cl-sub" style="display:block">${esc(c.field || '')}：${esc(c.old ?? '—')} → <b>${esc(c.new ?? '—')}</b>${c.note ? `・${esc(c.note)}` : ''}${c.sourceUrl ? ` · <a href="${esc(c.sourceUrl)}" target="_blank" rel="noopener">官方頁面</a>` : ''}</span></span>
+      ${c.offerId && offers().some((o) => o.id === c.offerId) ? `<button class="text-btn" data-edit="${esc(c.offerId)}">改</button>` : ''}</div>`;
+  }).join('');
+  return `<div class="card-title">官方頁面自動檢查（${shortDate(day)}${age > 8 ? '，已超過一週沒更新' : ''}）</div>
+    ${changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同，請確認後修改</div>${list}` : '<div class="cl-sub">官方頁面和目前資料一致 ✓</div>'}
+    ${fails.length ? `<div class="hint">讀不到：${esc(fails.join('、'))}（請手動確認）</div>` : ''}
+    ${report.summary ? `<div class="hint">${esc(report.summary)}</div>` : ''}
+    ${can.length ? `<button class="btn" style="width:100%;margin-top:10px" data-okall="1">✓ 依報告確認 ${can.length} 筆沒變動的優惠</button>` : ''}
+    <div style="height:14px"></div>`;
+}
+function confirmFromReport() {
+  const ids = reportConfirmable();
+  if (!ids.length) return;
+  const day = report.checkedAt.slice(0, 10);
+  const set = new Set(ids);
+  saveOffers(offers().map((o) => (set.has(o.id) ? { ...o, lastVerified: day } : o)));
+  ids.filter((id) => id.startsWith('prog:')).forEach((id) => saveProgram(id.slice(5), { lastVerified: day }));
+  toast(`已確認 ${ids.length} 筆`); renderData();
+}
+
 function renderWeekCard() {
   const stale = staleVerified();
   const progs = programList().filter(({ p }) => needsCheck(p));
@@ -299,7 +357,7 @@ function renderWeekCard() {
     ...stale.map((o) => row(o, o.id, `${cdot(CARD[o.cardId])}${esc(o.title)}`)),
     ...progs.filter(({ p }) => p.status === 'verified').map(({ key, p }) => row({ ...p, totalRate: null }, `prog:${key}`, esc(p.name))),
   ];
-  $('#weekCard').innerHTML = `<div class="card-title">每週確認（每 ${S().staleDays} 天）</div>
+  $('#weekCard').innerHTML = `${reportHtml()}<div class="card-title">每週確認（每 ${S().staleDays} 天）</div>
     ${items.length ? items.join('') : `<div class="cl-sub">已驗證的優惠都在 ${S().staleDays} 天內確認過 ✓</div>`}
     <div class="hint">超過 ${S().staleDays} 天沒確認的優惠會暫停推薦。到官方頁面看過後按「✓ 仍正確」；有變動按「改」。${pend ? `<br>另有 ${pend} 筆待驗證：填入官方網址並改成「已驗證」後才會正式推薦。` : ''}</div>`;
 }
@@ -330,6 +388,7 @@ function confirmOk(id) {
 }
 $('#weekCard').addEventListener('click', (e) => {
   const ok = e.target.closest('[data-ok]'), ed = e.target.closest('[data-edit]');
+  if (e.target.closest('[data-okall]')) { confirmFromReport(); return; }
   if (ok) confirmOk(ok.dataset.ok);
   if (ed) { if (ed.dataset.edit.startsWith('prog:')) toast('北捷／捷利卡請修改 data.js 的 PROGRAMS'); else openEditor(ed.dataset.edit); }
 });
@@ -591,7 +650,7 @@ function switchTab(tab) {
 function renderCurrent() { RENDER[currentTab](); renderWeekTip(); }
 $$('.tab').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 // 跨日或從背景回來時重新計算（到期、每週確認都依日期判斷）
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#sheet').hidden) renderCurrent(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#sheet').hidden) { renderCurrent(); loadReport(); } });
 
 /* ================= 安裝引導（同運動 App） ================= */
 const SHARE_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>';
@@ -642,6 +701,7 @@ function initInstallGuide() {
 }
 
 renderSearch();
+loadReport();
 initInstallGuide();
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
