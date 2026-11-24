@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -26,16 +26,20 @@ const blankSettings = () => ({
 const blank = () => ({ settings: blankSettings(), offers: null, programs: null, ver: 2 });
 const PROGRAMS_DEFAULT = JSON.parse(JSON.stringify(PROGRAMS));
 
+/** 舊版設定轉成目前格式（本機資料與匯入的備份共用） */
+function migrateSettings(raw, ver) {
+  const s = { ...blankSettings(), ...(raw || {}) };
+  // v1.0 舊格式：autoDebit（只代表 Richart）→ autoDebits
+  if (typeof s.autoDebit === 'boolean') { s.autoDebits = { ...s.autoDebits, 'taishin-richart': s.autoDebit }; delete s.autoDebit; }
+  // v1.4：每週確認改每月確認 → 舊預設 7 天改成 30 天
+  if ((ver || 1) < 2 && s.staleDays === 7) s.staleDays = 30;
+  return s;
+}
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!d || typeof d !== 'object') return blank();
-    const s = { ...blankSettings(), ...(d.settings || {}) };
-    // v1.0 舊格式：autoDebit（只代表 Richart）→ autoDebits
-    if (typeof s.autoDebit === 'boolean') { s.autoDebits = { ...s.autoDebits, 'taishin-richart': s.autoDebit }; delete s.autoDebit; }
-    // v1.4：每週確認改每月確認 → 舊預設 7 天改成 30 天
-    if ((d.ver || 1) < 2 && s.staleDays === 7) s.staleDays = 30;
-    return { ...blank(), ...d, settings: s, ver: 2 };
+    return { ...blank(), ...d, settings: migrateSettings(d.settings, d.ver), ver: 2 };
   } catch (e) { return blank(); }
 }
 function persist() {
@@ -614,7 +618,7 @@ $('#importFile').addEventListener('change', async (e) => {
     if (errs.length) { alert(`檔案有 ${errs.length} 個問題，未匯入：\n${errs.slice(0, 8).join('\n')}`); return; }
     if (!confirm(`用備份的 ${list.length} 筆優惠${d.settings ? '與設定' : ''}取代目前資料？`)) return;
     data.offers = list;
-    if (d.settings) data.settings = { ...blankSettings(), ...d.settings };
+    if (d.settings) data.settings = migrateSettings(d.settings, d.ver);
     if (d.programs) data.programs = d.programs;
     applyPrograms(); persist(); renderCurrent(); toast('已匯入');
   } catch (err) { toast('無法讀取這個檔案'); }
