@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -21,9 +21,9 @@ const blankSettings = () => ({
   allPlans: true,     // 比較所有可切換方案（提示需切換）
   showRef: true,      // 沒有已驗證資料時，顯示待驗證參考值
   soonDays: 30,       // 即將到期提醒
-  staleDays: 7,       // 已驗證資料超過幾天沒確認 → 需重新確認
+  staleDays: 30,      // 已驗證資料超過幾天沒確認 → 需重新確認（每月確認）
 });
-const blank = () => ({ settings: blankSettings(), offers: null, programs: null, ver: 1 });
+const blank = () => ({ settings: blankSettings(), offers: null, programs: null, ver: 2 });
 const PROGRAMS_DEFAULT = JSON.parse(JSON.stringify(PROGRAMS));
 
 function load() {
@@ -33,7 +33,9 @@ function load() {
     const s = { ...blankSettings(), ...(d.settings || {}) };
     // v1.0 舊格式：autoDebit（只代表 Richart）→ autoDebits
     if (typeof s.autoDebit === 'boolean') { s.autoDebits = { ...s.autoDebits, 'taishin-richart': s.autoDebit }; delete s.autoDebit; }
-    return { ...blank(), ...d, settings: s };
+    // v1.4：每週確認改每月確認 → 舊預設 7 天改成 30 天
+    if ((d.ver || 1) < 2 && s.staleDays === 7) s.staleDays = 30;
+    return { ...blank(), ...d, settings: s, ver: 2 };
   } catch (e) { return blank(); }
 }
 function persist() {
@@ -73,7 +75,7 @@ function soonPill(o) {
   return expiringSoon(o, S().soonDays) ? `<span class="pill soon">${d === 0 ? '今天到期' : `剩 ${d} 天`}</span>` : '';
 }
 const rateHtml = (ev, formal) => `<span class="rate ${formal ? 'ok' : 'ref'}">${fmtRate(ev.rate)}</span>`;
-/** 需要每週確認的優惠：仍有效，且從沒確認過或超過 staleDays 天 */
+/** 需要每月確認的優惠：仍有效，且從沒確認過或超過 staleDays 天 */
 const needsCheck = (o) => isLive(o) && (!o.lastVerified || daysBetween(o.lastVerified, todayKey()) > S().staleDays);
 const staleVerified = () => offers().filter((o) => isStale(o, S()));
 const programList = () => Object.entries(PROGRAMS).map(([key, p]) => ({ key, p }));
@@ -285,7 +287,7 @@ $('#calcForm').addEventListener('click', (e) => {
   if (g) { calc.reg = g.dataset.reg; renderCalc(); }
 });
 
-/* ================= 優惠資料（每週確認） ================= */
+/* ================= 優惠資料（每月確認） ================= */
 let dataCard = 'all';
 let stFilter = 'all';
 const ST_FILTERS = [['all', '全部'], ['check', '待確認'], ['verified', '已驗證'], ['pending', '待驗證'], ['soon', '即將到期'], ['expired', '已過期'], ['invalid', '已失效']];
@@ -361,7 +363,7 @@ function renderWeekCard() {
     ...stale.map((o) => row(o, o.id, `${cdot(CARD[o.cardId])}${esc(o.title)}`)),
     ...progs.filter(({ p }) => p.status === 'verified').map(({ key, p }) => row({ ...p, totalRate: null }, `prog:${key}`, esc(p.name))),
   ];
-  $('#weekCard').innerHTML = `${reportHtml()}<div class="card-title">每週確認（每 ${S().staleDays} 天）</div>
+  $('#weekCard').innerHTML = `${reportHtml()}<div class="card-title">每月確認（每 ${S().staleDays} 天）</div>
     ${items.length ? items.join('') : `<div class="cl-sub">已驗證的優惠都在 ${S().staleDays} 天內確認過 ✓</div>`}
     <div class="hint">超過 ${S().staleDays} 天沒確認的優惠會暫停推薦。到官方頁面看過後按「✓ 仍正確」；有變動按「改」。${pend ? `<br>另有 ${pend} 筆待驗證：填入官方網址並改成「已驗證」後才會正式推薦。` : ''}</div>`;
 }
@@ -653,7 +655,7 @@ function switchTab(tab) {
 }
 function renderCurrent() { RENDER[currentTab](); renderWeekTip(); }
 $$('.tab').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-// 跨日或從背景回來時重新計算（到期、每週確認都依日期判斷）
+// 跨日或從背景回來時重新計算（到期、每月確認都依日期判斷）
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#sheet').hidden) { renderCurrent(); loadReport(); } });
 
 /* ================= 安裝引導（同運動 App） ================= */

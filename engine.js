@@ -39,8 +39,8 @@ function effStatus(o, today = todayKey()) {
 }
 const isLive = (o, today) => ['verified', 'pending'].includes(effStatus(o, today));
 const daysLeft = (o, today = todayKey()) => (o.endDate ? daysBetween(today, o.endDate) : null);
-/** 已驗證但超過 S.staleDays（預設 7）天沒重新確認 → 需重新確認，不當正式推薦 */
-const staleDays = (S) => (S && S.staleDays) || 7;
+/** 已驗證但超過 S.staleDays（預設 30）天沒重新確認 → 需重新確認，不當正式推薦 */
+const staleDays = (S) => (S && S.staleDays) || 30;
 const isStale = (o, S, today = todayKey()) => effStatus(o, today) === 'verified' && (!o.lastVerified || daysBetween(o.lastVerified, today) > staleDays(S));
 const expiringSoon = (o, days, today = todayKey()) => { const d = daysLeft(o, today); return isLive(o, today) && d !== null && d >= 0 && d <= days; };
 
