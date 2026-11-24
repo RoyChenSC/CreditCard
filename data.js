@@ -3,7 +3,7 @@
 // 官方未寫明的項目一律 'pending' 或回饋率 null（顯示「資料不足」，不當 0%）；totalRate 0 代表官方明列不回饋。
 
 const DATA_VERSION = '2026-11-23';
-const DATA_UPDATED = '2026-11-23T09:37:32Z';   // 晚於每週報告時間 → 該報告的變動視為已更新
+const DATA_UPDATED = '2026-11-23T09:37:32Z';   // 晚於每月報告時間 → 該報告的變動視為已更新
 
 // 信用卡（foreignFeeSource：海外手續費的官方來源）
 const CARDS = [

@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.4.1';
+const VERSION = '1.5.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
@@ -296,7 +296,7 @@ let dataCard = 'all';
 let stFilter = 'all';
 const ST_FILTERS = [['all', '全部'], ['check', '待確認'], ['verified', '已驗證'], ['pending', '待驗證'], ['soon', '即將到期'], ['expired', '已過期'], ['invalid', '已失效']];
 
-/* ---------- 每週自動檢查報告（雲端排程每週一寫到 GitHub 的 claude/weekly-report 分支） ---------- */
+/* ---------- 每月自動檢查報告（雲端排程每月 1 日寫到 GitHub 的 claude/weekly-report 分支） ---------- */
 const REPORT_URL = 'https://raw.githubusercontent.com/RoyChenSC/CreditCard/claude/weekly-report/report.json';
 const REPORT_KEY = 'ccr-report';
 let report = null;
@@ -337,7 +337,7 @@ function reportHtml() {
       <span class="cl-sub" style="display:block">${esc(c.field || '')}：${esc(c.old ?? '—')} → <b>${esc(c.new ?? '—')}</b>${c.note ? `・${esc(c.note)}` : ''}${c.sourceUrl ? ` · <a href="${esc(c.sourceUrl)}" target="_blank" rel="noopener">官方頁面</a>` : ''}</span></span>
       ${c.offerId && offers().some((o) => o.id === c.offerId) ? `<button class="text-btn" data-edit="${esc(c.offerId)}">改</button>` : ''}</div>`;
   }).join('');
-  return `<div class="card-title">官方頁面自動檢查（${shortDate(day)}${age > 8 ? '，已超過一週沒更新' : ''}）</div>
+  return `<div class="card-title">官方頁面自動檢查（${shortDate(day)}${age > 32 ? '，已超過一個月沒更新' : ''}）</div>
     ${changes.length && reportHandled() ? `<div class="cl-sub">這份報告的 ${changes.length} 項變動已更新到網站資料（${shortDate(DATA_UPDATED.slice(0, 10))}）✓</div>`
       : changes.length ? `<div class="warn-box" style="margin:0 0 6px">有 ${changes.length} 項和目前資料不同或待確認，請確認後修改</div>${list}`
       : (report.confirmedIds || []).length ? '<div class="cl-sub">讀到的官方頁面和目前資料一致 ✓</div>' : '<div class="warn-box" style="margin:0">這次沒有讀到官方頁面，無法比對，請手動確認</div>'}

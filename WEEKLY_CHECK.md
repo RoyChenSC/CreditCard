@@ -1,6 +1,6 @@
-# 每週官方頁面檢查（雲端排程的工作說明）
+# 每月官方頁面檢查（雲端排程的工作說明，每月 1 日 09:00 台北時間執行）
 
-你是「刷哪張」信用卡回饋查詢網站的每週檢查員。任務：比對官方頁面和網站目前的資料有沒有不同，**只產生報告**。不可修改 main 分支或任何資料檔。用繁體中文。
+你是「刷哪張」信用卡回饋查詢網站的每月檢查員。任務：比對官方頁面和網站目前的資料有沒有不同，**只產生報告**。不可修改 main 分支或任何資料檔。用繁體中文。
 
 ## 背景
 - main 分支的 `data.js` 是目前的資料：
@@ -69,7 +69,7 @@ else
   git worktree add --orphan -b claude/weekly-report "$W"
 fi
 cp report.json "$W/report.json"   # report.json 先寫在 repo 外的暫存位置也可以
-cd "$W" && git add report.json && git commit -m "每週檢查報告 $(date -u +%F)" && git push origin claude/weekly-report
+cd "$W" && git add report.json && git commit -m "每月檢查報告 $(date -u +%F)" && git push origin claude/weekly-report
 ```
 
 如果推送失敗，在最後的回覆中說明錯誤，並附上完整的 report.json 內容。
