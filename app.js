@@ -1,6 +1,6 @@
 // 刷哪張：個人信用卡回饋查詢（純 HTML/CSS/JS PWA）
 // 資料：data.js（預設）→ 使用者修改存 localStorage；計算：engine.js；畫面：本檔
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 const STORAGE_KEY = 'ccr-v1';
 const BACKUP_KEY = 'ccr-last-backup';
 
